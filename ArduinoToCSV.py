@@ -36,29 +36,20 @@ def WriteToCSV(datalist):
 	# Handling to open our file if it exists or create new one
 	if exists(filename):
 		# try: 
-		f = csv.writer(open(filename,"a"))
+		f = csv.writer(open(filename,"a"),lineterminator='\n')
 			# break
 		# except:
 	else:
-		f = csv.writer(open(filename,"a+"))
+		f = csv.writer(open(filename,"a+"),lineterminator='\n')
 		# Write our header line out if this is a new file
 		f.writerow(header)
-		# for element in header:
-		# 	f.write(element + ",")
-		# f.write("\n")
+		
+
 
 	for row in datalist:
 		f.writerow([j['sensor'],j['time'],j['data'][0],j['data'][1]])
 
-	# for element in datalist:
-	# 	if type(element)==str:
-	# 		f.write(element + ",")
-	# 	if type(element)==list:
-	# 		for i in element:
-	# 			f.write(i + ",")
-	# Now we have processed all the data. Write a new line and close out.
-	# f.write("\n")
-	# f.close()
+	
 	csv_success = True
 
 
