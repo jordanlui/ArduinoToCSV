@@ -23,6 +23,7 @@
 #include <Wire.h>
 #include <WireExt.h>
 #include <elapsedMillis.h>
+#include <ArduinoJson.h>
 //elapsedMillis timeElapsed; // Global variable declaration for the elapsed time in the script as variable timeElapsed. Time output is not working yet :(
 
 
@@ -72,55 +73,58 @@ void setup()
 void loop()
 {
 
+  // Initialize JSON buffer
+  StaticJsonBuffer<300> jsonBuffer;
+  // Create our JSON object
+  JsonObject& root = jsonBuffer.createObject();
+  int i = 0;
   
-  // Display time elapsed
-  Serial.print("Time,");
-//  Serial.print(timeElapsed);
-  Serial.print("\n");
+
   
   // Read from the potentiometer
-  readMux(0);
-//  int val
-  int val = analogRead(A4);
+  readMux(0); // change addressing
+  int potentiometer = analogRead(A4);
+  root["pot"] = potentiometer; // Write to json object
+//  Serial.print("Potentiometer value is ");
+//  Serial.print(potentiometer);
+//  Serial.print("\n");
   
-  Serial.print("Potentiometer value is ");
-  Serial.print(val);
-  Serial.print("\n");
-//  delay(20);
-  
-  // Reading from Omron 8x1
-  // Omron 8x1 currently on address c1 on MUX.
-  readMux(1);
-  // SDA pin on Arduino should now be routed through MUX to the SDA on OMRON.
-  int i;
-  // Step one - send commands to the sensor
+  // Reading from Omron 8x1, address c1 on mux
+  readMux(1); // change the addressing
   delay(20);
+  // SDA pin on Arduino should now be routed through MUX to the SDA on OMRON.
+
+  //  int AckOmron8 = ReadOmron8(); // Returns true if it completes properly
+
+  // Step one - send commands to the sensor
   Wire.beginTransmission(D6T_addr);
   Wire.write(D6T_cmd);
   Wire.endTransmission();
 
   delay(50); // Delay between instruction and data acquisition
 
-  // Read from the sensor
-  // Need to send a read command here - but how will this work with 7 bit addressing?
+  // Request data from the sensor
   Wire.requestFrom(D6T_addr,numbytes); // D6T-8 returns 19 bytes 
 
   // Receive the data
-
+  
   if (0 <= Wire.available()) { // If there is data still left in buffer, we acquire it.
     i = 0;
     for (i=0; i < numbytes; i++) {
       rbuf[i] = Wire.read();
     }
     t_PTAT = (rbuf[0] + (rbuf[1] << 8) ) * 0.1;
-    Serial.print("Omron 8x8,");
+//    Serial.print("Omron 8x8,");
+    JsonArray& data = root.createNestedArray("omron8");
     for (i = 0; i < numel; i++) {
       tdata[i] = (rbuf[(i*2+2)] + (rbuf[(i*2+3)] << 8 )) * 0.1;
-      Serial.print(tdata[i]);
-      Serial.print(",");
+//      Serial.print(tdata[i]);
+//      Serial.print(",");
+      data.add(tdata[i]);
     }
-    Serial.print("\n");
+//    Serial.print("\n");
   }
+
 
   // Read from Omron 4x4
   readMux(2);
@@ -141,38 +145,48 @@ void loop()
     WireExt.endReception(); // End reception
     
     // Label our data as Omron 4x4
-    Serial.print("OMRON 4x4,");
+//    Serial.print("OMRON 4x4,");
     
     t_PTAT = (rbuf[0]+(rbuf[1]<<8))*0.1; 
+    JsonArray& data2 = root.createNestedArray("omron16");
     // Calculate the individual element values
     for (i = 0; i < 16; i++) {
       tdata[i]=(rbuf[(i*2+2)]+(rbuf[(i*2+3)]<<8))*0.1;
-      Serial.print(tdata[i]);
-      Serial.print(",");
+//      Serial.print(tdata[i]);
+//      Serial.print(",");
+      data2.add(tdata[i]);
     } 
   }
-  Serial.print("\n");
+//  Serial.print("\n");
 
   // Read FSRs
-  Serial.print("FSR1,");
-  Serial.print(analogRead(fsr1));
-  Serial.print("\n");
+//  Serial.print("FSR1,");
+//  Serial.print(analogRead(fsr1));
+//  Serial.print("\n");
+  root["fsr1"] = analogRead(fsr1);
 
-  Serial.print("FSR2,");
-  Serial.print(analogRead(fsr2));
-  Serial.print("\n");
+//  Serial.print("FSR2,");
+//  Serial.print(analogRead(fsr2));
+//  Serial.print("\n");
+  root["fsr2"] = analogRead(fsr2);
 
-  Serial.print("FSR3,");
-  Serial.print(analogRead(fsr3));
-  Serial.print("\n");
-  
+//  Serial.print("FSR3,");
+//  Serial.print(analogRead(fsr3));
+//  Serial.print("\n");
+  root["fsr3"] = analogRead(fsr3);
 
-  
-  
+//  Serial.print("\n");
 
-  Serial.print("\n");
-  delay(500);          
+//  Serial.print("Look at our JSON\n");
+//  root.prettyPrintTo(Serial);
+  root.printTo(Serial);
+  Serial.println();
+  delay(200);          
 }
+
+////////
+// Other functions
+///////
 
 int readMux(int channel){
   // Changes the addressing of the MUX.
@@ -208,3 +222,37 @@ int readMux(int channel){
   //return the value
 //  return val;
 }
+
+//int ReadOmron8(){
+//// Step one - send commands to the sensor
+//  Wire.beginTransmission(D6T_addr);
+//  Wire.write(D6T_cmd);
+//  Wire.endTransmission();
+//
+//  delay(50); // Delay between instruction and data acquisition
+//
+//  // Request data from the sensor
+//  Wire.requestFrom(D6T_addr,numbytes); // D6T-8 returns 19 bytes 
+//
+//  // Receive the data
+//  int i;
+//  if (0 <= Wire.available()) { // If there is data still left in buffer, we acquire it.
+//    i = 0;
+//    for (i=0; i < numbytes; i++) {
+//      rbuf[i] = Wire.read();
+//    }
+//    t_PTAT = (rbuf[0] + (rbuf[1] << 8) ) * 0.1;
+//    Serial.print("Omron 8x8,");
+//    JsonArray& data = root.createNestedArray("data");
+//    for (i = 0; i < numel; i++) {
+//      tdata[i] = (rbuf[(i*2+2)] + (rbuf[(i*2+3)] << 8 )) * 0.1;
+//      Serial.print(tdata[i]);
+//      Serial.print(",");
+//      data.add(tdata[i]);
+//    }
+//    Serial.print("\n");
+//  }
+//  return True; // Should only return True if this function runs completely. 
+//
+//}
+

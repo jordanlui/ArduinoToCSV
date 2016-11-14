@@ -1,8 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# First basic build to read data from Arduino COM port
-# We also try to write to csv now
+"""
+This function will read the data from Arduino and write to CSV.
+"""
 
 # Initialize
 import serial
@@ -15,8 +16,10 @@ from os.path import exists
 # Useful variables
 arduinotiming = 0.01 # Clock on arduino sketch, in seconds
 
+print 'starting our script'
 # Make serial connection
 serial = serial.Serial("COM5", 9600, timeout=0)
+print 'connected to Serial Device'
 
 # Important functions
 
@@ -28,7 +31,7 @@ def WriteToCSV(datalist):
 
 	global csv_success
 	# Define header
-	header = ["sensor","time","data1","data2"]
+	header = ["pot","fsr1","fsr2","fsr3","omron8","omron8","omron8","omron8","omron8","omron8","omron8","omron8","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16","omron16"]
 
 	# Define our file
 	filename = str(time.strftime("%y_%m_%d_") + "log.csv")
@@ -46,8 +49,12 @@ def WriteToCSV(datalist):
 		
 
 
-	for row in datalist:
-		f.writerow([j['sensor'],j['time'],j['data'][0],j['data'][1]])
+	# For datum in datalist: # This isn't needed if I spell out my assignments below
+	# Better method would involve something where the data is in a single hierarchy and then written piecewise
+		
+	f.writerow([datalist['pot'],datalist['fsr1'],datalist['fsr2'],datalist['fsr3'],
+		datalist['omron8'][0],datalist['omron8'][1],datalist['omron8'][2],datalist['omron8'][3],datalist['omron8'][4],datalist['omron8'][5],datalist['omron8'][6],datalist['omron8'][7],
+		datalist['omron16'][0],datalist['omron16'][1],datalist['omron16'][2],datalist['omron16'][3],datalist['omron16'][4],datalist['omron16'][5],datalist['omron16'][6],datalist['omron16'][7],datalist['omron16'][8],datalist['omron16'][9],datalist['omron16'][10],datalist['omron16'][11],datalist['omron16'][12],datalist['omron16'][13],datalist['omron16'][14],datalist['omron16'][15]])
 
 	
 	csv_success = True
@@ -56,6 +63,7 @@ def WriteToCSV(datalist):
 # Run the loop until it crashes
 while True:
 # for i in range(0,10):
+	print 'reading data'
 	data = serial.readline().strip('\n\r')
 	# data = serial.readline().strip('\n\r')
  
@@ -66,22 +74,31 @@ while True:
 		# Method one: Verify that string starts and ends with {}
 		# Method two: verify a specific line length if we know what we're expecting. This option is worse if decimal points are changing in our data
 	 	# print 'String begin and ends with',data[0],data[-1]
-	 	
+	 	# print 'data length',len(data)
+
+	 # 	test1 = '{"pot":525,"omron8":[21,21,21,21,21,21,21,21],"omron16":[20,20,20,20,20,20,20,20,20,20,20,20,22,22,22,19],"fsr1":0,"fsr2":0,"fsr3":0}'
+		# test2 = json.loads(test1)
+		# print 'testdata in json format',test2
+		# data = test1
+		
+		print len(data)
+
  		if data[0] == '{' and data[-1] == '}': 
  			print "String fully received"
  			j = json.loads(data)
  			print 'length of data is',len(data),' and length of JSON is ',len(j)
  			print 'entire string',j
- 			print 'sensor type', j['sensor']
- 			print 'time is ', j['time']
- 			print 'data is 1 is',j['data'][0]
- 			print 'data is 2 is',j['data'][1]
+ 			print json.dumps(j, indent=4) # pretty print the data
+ 			print 'data from FSRs',j['fsr1'],j['fsr2'],j['fsr3']
 
  			print 'now we write to CSV'
  			
  			WriteToCSV(j)
- 			print csv_success
+ 			if csv_success == True:
+				print 'Written to CSV'
  			print '\n'
+
+		
 
  			# WriteToCSV(j['sensor'])
  			# WriteToCSV(str(j['time']))
@@ -98,7 +115,7 @@ while True:
 	 	# print j['sensor']
 	 	# print j['data']
  	
-	time.sleep(0.1)
+	time.sleep(0.3)
 
 # json test
 # data = '{"sensor":"gps","time":1351824120,"data":[48.756080,2.302038]}'
