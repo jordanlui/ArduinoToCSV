@@ -1,5 +1,6 @@
-/*  Script reads data from two Omron devices and analog sensors and outputs to serial.
- *  Multiplexer setup
+/*  Script reads data from Prototype device and outputs to serial
+ *  Sensors include Omron, Sharp IR sensor, and FSRs.
+ *  Multiplexer setup is used to access the OMRON
  *  This script reads the data from a 8x1 OMRON D6T-8L sensor using only the Wire library. 
  *  Note that use of D6T-44L 4x4 sensor requires the WireExt.h library, so that the 35 bytes of data can be read from the sensor.
  *  Original code from Arduino forum on WireExt.h https://forum.arduino.cc/index.php?topic=217394.0

@@ -46,8 +46,8 @@ def WriteToCSV(datalist):
 		
 
 
-	for row in datalist:
-		f.writerow([j['sensor'],j['time'],j['data'][0],j['data'][1]])
+	
+	f.writerow([datalist['sensor'],datalist['time'],datalist['data'][0],datalist['data'][1]])
 
 	
 	csv_success = True
